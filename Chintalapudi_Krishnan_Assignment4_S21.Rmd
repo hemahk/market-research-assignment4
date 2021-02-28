@@ -1,0 +1,111 @@
+---
+title: 'MAX 503 Assignment # 4'
+output:
+  pdf_document: default
+  html_notebook: default
+---
+```{r}
+getwd()
+ecomm.df <- read.csv("ecommerce-data.csv")
+str(ecomm.df)
+```
+
+1. Using the integer approximation of page views (see Exercises in Sect.4.10), describe page
+views for parents, teachers, and health professionals. Use a by() or aggregate() function as appropriate.
+
+```{r}
+pageViewInt <- rep(NA, length(ecomm.df$behavPageviews))
+pageViewInt[ecomm.df$behavPageviews=="0"] <- 0
+pageViewInt[ecomm.df$behavPageviews=="1"] <- 1
+pageViewInt[ecomm.df$behavPageviews=="2 to 3"] <- 2
+pageViewInt[ecomm.df$behavPageviews=="4 to 6"] <- 4
+pageViewInt[ecomm.df$behavPageviews=="7 to 9"] <- 7
+pageViewInt[ecomm.df$behavPageviews=="10+"] <- 10
+ecomm.df$pageViewInt <- pageViewInt
+
+aggregate(pageViewInt ~ profile, data = ecomm.df, summary)
+
+```
+The above output displays the summary of page views for all profiles
+
+```{r}
+by(ecomm.df$pageViewInt, ecomm.df$profile, sum)
+```
+The above output displays the sum of page views for all profiles
+
+2. What are the proportions of men and women among the various visitor profiles (teacher, parent, relative, etc.)? For this question, don’t count observations where the gender is not specified as male or female.
+
+```{r}
+ecommdf_1 <- ecomm.df[ecomm.df$gender=="Male" | ecomm.df$gender == "Female",]
+with(ecommdf_1,prop.table(table(profile, gender), margin=1))
+
+```
+3. Considering parents, teachers, and health professionals, which group has made the most purchases recently? Answer with both descriptives and a visualization.
+
+```{r}
+ecomm.df_2 = ecomm.df[(ecomm.df$purchasedWhen=="In the past month")
+& (ecomm.df$profile=="Parent"|
+ecomm.df$profile=="Health Professional"| 
+ecomm.df$profile=="Teacher"), ]
+
+```
+Assuming most recent data as "In the past month" since "In the past week" does not have much data
+
+```{r}
+table(ecomm.df_2$purchasedWhen,ecomm.df_2$profile)
+```
+The above table describes the frequency of purchases made by Parent, Health Professional and Teacher.
+
+As shown in this frequency table, Parent made the most purchases in the past month with 21 purchases.
+
+```{r}
+prop.table(table(ecomm.df_2$purchasedWhen,ecomm.df_2$profile))
+```
+The above table describes the proportion of purchases made by Parent, Health Professional and Teacher.
+
+As shown in this proportion table, Parent made 60% of purchases i.e. the most purchases in the past month.
+
+```{r}
+library(lattice)
+ecomm.df_2$purchasedWhen = as.factor(ecomm.df_2$purchasedWhen)
+ecomm.df_2$profile = as.factor(ecomm.df_2$profile)
+histogram(~ profile | purchasedWhen, data = ecomm.df_2)
+```
+
+4. In answering the previous question, you might use either counts or proportions. Do they give you the same answer? If not, show an example. What is a business question for which counts would be preferable?
+
+```{r}
+table(ecomm.df_2$profile,ecomm.df_2$purchasedWhen)
+
+```
+The above table gives only count, or frequency, of each value.
+
+```{r}
+prop.table(table(ecomm.df_2$profile,ecomm.df_2$purchasedWhen),margin=2)
+
+```
+The above proportion table gives proportion in relation to each column.
+
+```{r}
+histogram(~profile | purchasedWhen, data = ecomm.df_2, type = "count")
+```
+The above histograms do not give the same answer. Although they look similar, both charts represent different aspects of the output. The first histogram displayed the proportion of each profile whereas the second histogram displayed the frequency of each profile. In other words, each histogram displays the data by different measures.
+
+In general,for interpretation of data, proportion is preferred but to take action on business decisions, you would need the actual numbers and that is why count is preferred (for example, budgeting).
+
+5. When we split the profiles into men and women, and consider completed purchases on the site (variable behavAnySale) which combination of profile and gender made the highest number of purchases? Which had the highest rate of purchase, relative to total number of observations?
+
+```{r}
+library(lattice)
+histogram(~behavAnySale | profile + gender, data = ecommdf_1)
+```
+
+```{r}
+aggregate(behavAnySale~profile + gender, data = ecommdf_1, sum)
+```
+Female Parent made 31 purchases which is the highest number of purchases.
+
+```{r}
+aggregate(behavAnySale~profile + gender, data = ecommdf_1, mean)
+```
+Male Teacher had about 66.66% purchases which is the highest rate of purchases, relative to the total number of observations.
